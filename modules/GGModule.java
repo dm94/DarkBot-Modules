@@ -183,15 +183,12 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
     }
 
     private void removeIncorrectTarget() {
-        if (ggConfig.sendNPCsCorner && main.mapManager.isTarget(attack.target) && attack.target.health.hpPercent() < 0.25) {
-            if (!allLowLifeOrISH()) {
-                if(isLowHealh(attack.target)){
-                    attack.target = null;
-                }
-            }
-        }
         if (attack.target.ish){
             attack.target = null;
+            return;
+        }
+        if (ggConfig.sendNPCsCorner && main.mapManager.isTarget(attack.target) && isLowHealh(attack.target)) {
+            if (!allLowLifeOrISH()) { attack.target = null; }
         }
     }
 
@@ -203,12 +200,8 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
         int npcsLowLife = 0;
 
         for(Npc n:npcs){
-            if (isLowHealh(n)) {
-                npcsLowLife++;
-            }
-            if (n.ish) {
-                return true;
-            }
+            if (n.ish) { return true; }
+            if (isLowHealh(n)) { npcsLowLife++; }
         }
 
         return npcsLowLife >= npcs.size();
