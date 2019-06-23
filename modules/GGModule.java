@@ -64,7 +64,7 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
         public boolean useDynamicRange = true;
 
         @Option(value = "GateModule Logic ABG", description = "Use GateModule logic in ABG")
-        public boolean useGateModuleLogic = false;
+        public boolean useGateModuleLogic = true;
     }
 
     @Override
@@ -137,7 +137,7 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
                 attack.doKillTargetTick();
                 removeIncorrectTarget();
                 if ((main.hero.map.id == 51 || main.hero.map.id == 52 || main.hero.map.id == 53) &&
-                        ggConfig.useGateModuleLogic && !allLowLifeOrISH()) {
+                        ggConfig.useGateModuleLogic) {
                     gateModuleLogic();
                 } else {
                     eventLogic();
