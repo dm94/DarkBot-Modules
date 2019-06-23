@@ -95,6 +95,7 @@ public class PaladiumModule extends LootNCollectorModule implements CustomModule
 
     @Override
     public void install(Main main,PaladiumConfig configPa ) {
+        super.install(main);
         this.main = main;
         this.SELL_MAP = main.starManager.byName("5-2");
         this.hero = main.hero;

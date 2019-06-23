@@ -68,6 +68,7 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
 
     @Override
     public void install(Main main, GGConfig config) {
+        super.install(main);
         this.main = main;
         this.config = main.config;
         this.attack = new NpcAttacker(main);
@@ -213,7 +214,6 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
         double angle = targetLoc.angle(heroLoc), distance = heroLoc.distance(targetLoc), radius = target.npcInfo.radius;
 
         dynamicNPCRange(distance);
-
         radius += rangeNPCFix;
 
         if (distance > radius) {
@@ -223,6 +223,7 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
             radiusFix += (radius - distance) / 6;
             radiusFix = (int) min(radiusFix, target.npcInfo.radius / 2);
         }
+
         distance = (radius += radiusFix);
         angle += Math.max((hero.shipInfo.speed * 0.625) + (min(200, target.locationInfo.speed) * 0.625)
                 - heroLoc.distance(Location.of(targetLoc, angle, radius)), 0) / radius;
