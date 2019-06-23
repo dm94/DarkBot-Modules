@@ -184,6 +184,10 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
                 }
             }
         }
+        if (attack.target.ish){
+            attack.target = null;
+            return;
+        }
     }
 
     public boolean isLowHealh(Npc npc){
