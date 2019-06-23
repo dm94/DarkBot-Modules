@@ -135,7 +135,7 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
                 if (ggConfig.takeBoxes && isNotWaiting()) {
                     findBox();
                 }
-                if (!tryCollectNearestBox() && (!drive.isMoving() || drive.isOutOfMap())) {
+                if (!tryCollectNearestBox() || !ggConfig.takeBoxes) {
                     if (hero.health.hpPercent() >= config.GENERAL.SAFETY.REPAIR_TO_HP) {
                         repairing = false;
                         this.main.setModule(new MapModule()).setTarget(main.starManager.byId(main.mapManager.entities.portals.get(0).id));
