@@ -132,8 +132,11 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
                 moveToAnSafePosition();
             } else if (!main.mapManager.entities.portals.isEmpty()) {
                 hero.roamMode();
-                if (ggConfig.takeBoxes && super.isNotWaiting()) {
-                    super.tick();
+                if (ggConfig.takeBoxes && isNotWaiting()) {
+                    findBox();
+                    if (!tryCollectNearestBox() && (!drive.isMoving() || drive.isOutOfMap())) {
+                        drive.moveRandom();
+                    }
                 } else {
                     if (hero.health.hpPercent() >= config.GENERAL.SAFETY.REPAIR_TO_HP) {
                         repairing = false;
