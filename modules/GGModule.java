@@ -22,9 +22,11 @@ import java.util.function.Supplier;
 
 import static java.lang.Double.max;
 import static java.lang.Double.min;
+import static java.lang.Math.cos;
+import static java.lang.Math.sin;
 
 public class GGModule extends CollectorModule implements CustomModule<GGModule.GGConfig> {
-    private String version = "v1 Beta 27";
+    private String version = "v1 Beta 28";
 
     private Main main;
     private Config config;
@@ -39,6 +41,8 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
     private int lasNpcHealth = 0;
     private int lasPlayerHealth = 0;
     private NpcAttacker attack;
+
+    private boolean direction;
 
     public static class GGConfig {
         @Option(value = "Honor config", description = "Used on finish wave")
@@ -58,6 +62,9 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
 
         @Option(value = "Dynamic Range", description = "Automatically changes the range")
         public boolean useDynamicRange = true;
+
+        @Option(value = "GateModule Logic ABG", description = "Use GateModule logic in ABG")
+        public boolean useGateModuleLogic = false;
     }
 
     @Override
@@ -129,7 +136,12 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
                 hero.attackMode();
                 attack.doKillTargetTick();
                 removeIncorrectTarget();
-                moveToAnSafePosition();
+                if ((main.hero.map.id == 51 || main.hero.map.id == 52 || main.hero.map.id == 53) &&
+                        ggConfig.useGateModuleLogic && !allLowLifeOrISH()) {
+                    gateModuleLogic();
+                } else {
+                    eventLogic();
+                }
             } else if (!main.mapManager.entities.portals.isEmpty()) {
                 hero.roamMode();
                 if (ggConfig.takeBoxes && isNotWaiting()) {
@@ -210,7 +222,7 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
         return npcsLowLife >= npcs.size();
     }
 
-    private void moveToAnSafePosition() {
+    private void eventLogic() {
         Npc target = attack.target;
 
         if (target == null || target.locationInfo == null) return;
@@ -220,7 +232,16 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
 
         double angle = targetLoc.angle(heroLoc), distance = heroLoc.distance(targetLoc), radius = target.npcInfo.radius;
 
-        dynamicNPCRange(distance);
+        if (hero.health.hpPercent() <= config.GENERAL.SAFETY.REPAIR_HP){
+            rangeNPCFix = 1000;
+            repairing = true;
+        } else if  (hero.health.hpPercent() >= config.GENERAL.SAFETY.REPAIR_TO_HP){
+            repairing = false;
+            if (ggConfig.useDynamicRange) {
+                dynamicNPCRange(distance);
+            }
+        }
+
         radius += rangeNPCFix;
 
         if (distance > radius) {
@@ -244,15 +265,7 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
     }
 
     private void dynamicNPCRange(double distance){
-        if (hero.health.hpPercent() <= config.GENERAL.SAFETY.REPAIR_HP){
-            rangeNPCFix = 1000;
-            repairing = true;
-        } else if  (hero.health.hpPercent() >= config.GENERAL.SAFETY.REPAIR_TO_HP){
-            rangeNPCFix = 0;
-            repairing = false;
-        }
-
-        if (ggConfig.useDynamicRange && lastCheck <= System.currentTimeMillis()-8000 && distance <= 1000) {
+        if (lastCheck <= System.currentTimeMillis()-8000 && distance <= 1000) {
             if (lasPlayerHealth > hero.health.hp && rangeNPCFix < 500) {
                 rangeNPCFix += 50;
             } else if (lasNpcHealth == attack.target.health.hp) {
@@ -279,6 +292,66 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
                         .thenComparing(n -> (n.locationInfo.now.distance(location)))).orElse(null);
     }
 
+
+    /* Gate Module logic */
+
+    private void gateModuleLogic() {
+        if (attack.target == null || attack.target.locationInfo == null) return;
+
+        Location center = new Location(4100, 4100);
+        Location now = hero.locationInfo.now;
+        double safeDistance = attack.target.npcInfo.radius;
+        Location location = attack.target.locationInfo.now;
+        double angle = now.angle(center);
+        double distance = location.distance(now);
+
+        if (ggConfig.useDynamicRange) {
+            dynamicNPCRange(distance);
+        }
+        safeDistance += rangeNPCFix;
+
+        if (safeDistance == 500) safeDistance = 600;
+
+        if (attack.castingAbility()) safeDistance = Math.min(570, safeDistance);
+        if (repairing || (repairing = (hero.health.hpPercent() < config.GENERAL.SAFETY.REPAIR_HP))) safeDistance = 2000;
+
+        if (safeDistance > distance) {
+
+            double radius = 3850;
+            double move = (safeDistance - distance);
+
+            move -= (distance - radius);
+            move = max(min(move, (safeDistance - distance) * 1.5), 0);
+
+            double speed = hero.shipInfo.speed / (double) 10;
+
+            radius += direction ? speed : -speed;
+            direction = !direction;
+
+            double centerDistance = center.distance(now);
+            double diff = centerDistance - radius;
+
+            if (diff > 0 && diff > safeDistance) {
+                radius = centerDistance - safeDistance + distance;
+            } else if (-diff > safeDistance) {
+                radius = centerDistance + safeDistance - distance;
+            } else {
+                angle += move / radius;
+            }
+
+            drive.move(
+                    center.x + cos(angle) * radius,
+                    center.y + sin(angle) * radius);
+
+        } else if (Math.abs(safeDistance - distance) > 200) {
+
+            angle = location.angle(center);
+
+            drive.move(
+                    location.x - cos(angle) * safeDistance,
+                    location.y - sin(angle) * safeDistance);
+        }
+    }
 
 }
 
