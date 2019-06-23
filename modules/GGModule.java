@@ -30,7 +30,7 @@ import static java.lang.Double.max;
 import static java.lang.Double.min;
 
 public class GGModule extends CollectorModule implements CustomModule<GGModule.GGConfig> {
-    private String version = "v1 Beta 22";
+    private String version = "v1 Beta 23";
     private static final double TAU = Math.PI * 2;
 
     private Main main;
@@ -198,8 +198,11 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
         int npcsLowLife = 0;
 
         for (int i=0; i < npcs.size();i++) {
-            if (isLowHealh(npcs.get(i)) || npcs.get(i).ish) {
+            if (isLowHealh(npcs.get(i))) {
                 npcsLowLife++;
+            }
+            if (npcs.get(i).ish) {
+                return true;
             }
         }
 
