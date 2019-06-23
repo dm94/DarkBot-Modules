@@ -130,11 +130,11 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
                 attack.doKillTargetTick();
                 removeIncorrectTarget();
                 moveToAnSafePosition();
-            } else if (!main.mapManager.entities.portals.isEmpty() && ggConfig.takeBoxes && super.isNotWaiting()) {
+            } else if (!main.mapManager.entities.portals.isEmpty()) {
                 hero.roamMode();
-                super.tick();
-
-                if (!super.tryCollectNearestBox() && (!drive.isMoving() || drive.isOutOfMap())) {
+                if (ggConfig.takeBoxes && super.isNotWaiting()) {
+                    super.tick();
+                } else {
                     if (hero.health.hpPercent() >= config.GENERAL.SAFETY.REPAIR_TO_HP) {
                         repairing = false;
                         this.main.setModule(new MapModule()).setTarget(main.starManager.byId(main.mapManager.entities.portals.get(0).id));
@@ -143,7 +143,6 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
                         repairing = true;
                     }
                 }
-
             } else if (!drive.isMoving()) {
                 hero.setMode(ggConfig.Honor);
                 drive.moveRandom();
