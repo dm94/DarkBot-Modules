@@ -24,7 +24,7 @@ import static java.lang.Double.max;
 import static java.lang.Double.min;
 
 public class GGModule extends CollectorModule implements CustomModule<GGModule.GGConfig> {
-    private String version = "v1 Beta 26";
+    private String version = "v1 Beta 27";
 
     private Main main;
     private Config config;
@@ -134,11 +134,13 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
                 hero.roamMode();
                 if (ggConfig.takeBoxes && isNotWaiting()) {
                     findBox();
+                    tryCollectNearestBox();
                 }
-                if (!tryCollectNearestBox() || !ggConfig.takeBoxes) {
+                if (!drive.isMoving() || drive.isOutOfMap()){
                     if (hero.health.hpPercent() >= config.GENERAL.SAFETY.REPAIR_TO_HP) {
                         repairing = false;
                         this.main.setModule(new MapModule()).setTarget(main.starManager.byId(main.mapManager.entities.portals.get(0).id));
+                        return;
                     } else {
                         drive.moveRandom();
                         repairing = true;
@@ -187,8 +189,9 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
             attack.target = null;
             return;
         }
-        if (ggConfig.sendNPCsCorner && main.mapManager.isTarget(attack.target) && isLowHealh(attack.target)) {
-            if (!allLowLifeOrISH()) { attack.target = null; }
+        if (ggConfig.sendNPCsCorner && main.mapManager.isTarget(attack.target) &&
+                isLowHealh(attack.target) && !allLowLifeOrISH()) {
+            attack.target = null;
         }
     }
 
