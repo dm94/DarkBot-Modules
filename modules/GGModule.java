@@ -26,7 +26,7 @@ import static java.lang.Math.cos;
 import static java.lang.Math.sin;
 
 public class GGModule extends CollectorModule implements CustomModule<GGModule.GGConfig> {
-    private String version = "v1 Beta 28";
+    private String version = "v1 Beta 29";
 
     private Main main;
     private Config config;
@@ -237,9 +237,11 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
             repairing = true;
         } else if  (hero.health.hpPercent() >= config.GENERAL.SAFETY.REPAIR_TO_HP){
             repairing = false;
-            if (ggConfig.useDynamicRange) {
-                dynamicNPCRange(distance);
-            }
+            rangeNPCFix = 0;
+        }
+
+        if (ggConfig.useDynamicRange) {
+            dynamicNPCRange(distance);
         }
 
         radius += rangeNPCFix;
