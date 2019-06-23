@@ -24,7 +24,7 @@ import static java.lang.Double.max;
 import static java.lang.Double.min;
 
 public class GGModule extends CollectorModule implements CustomModule<GGModule.GGConfig> {
-    private String version = "v1 Beta 24";
+    private String version = "v1 Beta 25";
 
     private Main main;
     private Config config;
