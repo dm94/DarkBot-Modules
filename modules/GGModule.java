@@ -134,10 +134,8 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
                 hero.roamMode();
                 if (ggConfig.takeBoxes && isNotWaiting()) {
                     findBox();
-                    if (!tryCollectNearestBox() && (!drive.isMoving() || drive.isOutOfMap())) {
-                        drive.moveRandom();
-                    }
-                } else {
+                }
+                if (!tryCollectNearestBox() && (!drive.isMoving() || drive.isOutOfMap())) {
                     if (hero.health.hpPercent() >= config.GENERAL.SAFETY.REPAIR_TO_HP) {
                         repairing = false;
                         this.main.setModule(new MapModule()).setTarget(main.starManager.byId(main.mapManager.entities.portals.get(0).id));
