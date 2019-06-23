@@ -24,7 +24,7 @@ import static java.lang.Double.max;
 import static java.lang.Double.min;
 
 public class GGModule extends CollectorModule implements CustomModule<GGModule.GGConfig> {
-    private String version = "v1 Beta 25";
+    private String version = "v1 Beta 26";
 
     private Main main;
     private Config config;
@@ -51,7 +51,7 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
         public int idGate = 51;
 
         @Option("Take materials")
-        public boolean takeBoxes = false;
+        public boolean takeBoxes = true;
 
         @Option("Send NPCs to corner")
         public boolean sendNPCsCorner = true;
@@ -133,6 +133,17 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
             } else if (!main.mapManager.entities.portals.isEmpty() && ggConfig.takeBoxes && super.isNotWaiting()) {
                 hero.roamMode();
                 super.tick();
+
+                if (!super.tryCollectNearestBox() && (!drive.isMoving() || drive.isOutOfMap())) {
+                    if (hero.health.hpPercent() >= config.GENERAL.SAFETY.REPAIR_TO_HP) {
+                        repairing = false;
+                        this.main.setModule(new MapModule()).setTarget(main.starManager.byId(main.mapManager.entities.portals.get(0).id));
+                    } else {
+                        drive.moveRandom();
+                        repairing = true;
+                    }
+                }
+
             } else if (!drive.isMoving()) {
                 hero.setMode(ggConfig.Honor);
                 drive.moveRandom();
