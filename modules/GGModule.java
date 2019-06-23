@@ -15,12 +15,6 @@ import com.github.manolo8.darkbot.gui.tree.components.JShipConfigField;
 import com.github.manolo8.darkbot.modules.utils.NpcAttacker;
 import com.github.manolo8.darkbot.config.types.Option;
 import com.github.manolo8.darkbot.core.itf.CustomModule;
-import com.github.manolo8.darkbot.utils.ByteArrayToBase64TypeAdapter;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
-import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -30,15 +24,13 @@ import static java.lang.Double.max;
 import static java.lang.Double.min;
 
 public class GGModule extends CollectorModule implements CustomModule<GGModule.GGConfig> {
-    private String version = "v1 Beta 23";
-    private static final double TAU = Math.PI * 2;
+    private String version = "v1 Beta 24";
 
     private Main main;
     private Config config;
     private List<Npc> npcs;
     private HeroManager hero;
     private Drive drive;
-    private Location direction;
     private int radiusFix;
     private GGConfig ggConfig;
     private boolean repairing;
@@ -46,7 +38,7 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
     private long lastCheck = System.currentTimeMillis();
     private int lasNpcHealth = 0;
     private int lasPlayerHealth = 0;
-    NpcAttacker attack;
+    private NpcAttacker attack;
 
     public static class GGConfig {
         @Option(value = "Honor config", description = "Used on finish wave")
@@ -63,6 +55,9 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
 
         @Option("Send NPCs to corner")
         public boolean sendNPCsCorner = true;
+
+        @Option(value = "Dynamic Range", description = "Automatically changes the range")
+        public boolean useDynamicRange = true;
     }
 
     @Override
@@ -132,7 +127,7 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
             if (findTarget()) {
                 hero.attackMode();
                 attack.doKillTargetTick();
-                removeLowHeal();
+                removeIncorrectTarget();
                 moveToAnSafePosition();
             } else if (!main.mapManager.entities.portals.isEmpty() && ggConfig.takeBoxes && super.isNotWaiting()) {
                 hero.roamMode();
@@ -161,7 +156,7 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
     private boolean findTarget() {
         if (attack.target == null || attack.target.removed) {
             if (!npcs.isEmpty()) {
-                if (ggConfig.sendNPCsCorner && !allLowLife()) {
+                if (ggConfig.sendNPCsCorner && !allLowLifeOrISH()) {
                     attack.target = bestNpc(hero.locationInfo.now);
                 } else {
                     attack.target = closestNpc(hero.locationInfo.now);
@@ -169,39 +164,37 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
             } else {
                 attack.target = null;
             }
-        } else if (attack.target.health.hpPercent() < 0.25 && !allLowLife()) {
+        } else if (attack.target.health.hpPercent() < 0.25 && !allLowLifeOrISH()) {
             attack.target = null;
         }
         return attack.target != null;
     }
 
-    private void removeLowHeal() {
+    private void removeIncorrectTarget() {
         if (ggConfig.sendNPCsCorner && main.mapManager.isTarget(attack.target) && attack.target.health.hpPercent() < 0.25) {
-            if (!allLowLife()) {
+            if (!allLowLifeOrISH()) {
                 if(isLowHealh(attack.target)){
                     attack.target = null;
-                    return;
                 }
             }
         }
         if (attack.target.ish){
             attack.target = null;
-            return;
         }
     }
 
-    public boolean isLowHealh(Npc npc){
+    private boolean isLowHealh(Npc npc){
         return npc.health.hpPercent() < 0.25;
     }
 
-    private boolean allLowLife(){
+    private boolean allLowLifeOrISH(){
         int npcsLowLife = 0;
 
-        for (int i=0; i < npcs.size();i++) {
-            if (isLowHealh(npcs.get(i))) {
+        for(Npc n:npcs){
+            if (isLowHealh(n)) {
                 npcsLowLife++;
             }
-            if (npcs.get(i).ish) {
+            if (n.ish) {
                 return true;
             }
         }
@@ -211,14 +204,15 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
 
     private void moveToAnSafePosition() {
         Npc target = attack.target;
-        if (!hero.drive.isMoving()) direction = null;
+
+        if (target == null || target.locationInfo == null) return;
+
         Location heroLoc = hero.locationInfo.now;
-        if (target == null ||target.locationInfo == null) return;
         Location targetLoc = target.locationInfo.destinationInTime(400);
 
-        double angle = targetLoc.angle(heroLoc), distance = heroLoc.distance(targetLoc), radius = target.npcInfo.radius;;
+        double angle = targetLoc.angle(heroLoc), distance = heroLoc.distance(targetLoc), radius = target.npcInfo.radius;
 
-        dinamicNPCRange(distance);
+        dynamicNPCRange(distance);
 
         radius += rangeNPCFix;
 
@@ -233,7 +227,7 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
         angle += Math.max((hero.shipInfo.speed * 0.625) + (min(200, target.locationInfo.speed) * 0.625)
                 - heroLoc.distance(Location.of(targetLoc, angle, radius)), 0) / radius;
 
-        direction = Location.of(targetLoc, angle, distance);
+        Location direction = Location.of(targetLoc, angle, distance);
         while (!drive.canMove(direction) && distance < 10000)
             direction.toAngle(targetLoc, angle += 0.3, distance += 2);
         if (distance >= 10000) direction.toAngle(targetLoc, angle, 500);
@@ -241,7 +235,7 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
         drive.move(direction);
     }
 
-    private void dinamicNPCRange(double distance){
+    private void dynamicNPCRange(double distance){
         if (hero.health.hpPercent() <= config.GENERAL.SAFETY.REPAIR_HP){
             rangeNPCFix = 1000;
             repairing = true;
@@ -250,7 +244,7 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
             repairing = false;
         }
 
-        if (lastCheck <= System.currentTimeMillis()-8000 && distance <= 1000) {
+        if (ggConfig.useDynamicRange && lastCheck <= System.currentTimeMillis()-8000 && distance <= 1000) {
             if (lasPlayerHealth > hero.health.hp && rangeNPCFix < 500) {
                 rangeNPCFix += 50;
             } else if (lasNpcHealth == attack.target.health.hp) {
