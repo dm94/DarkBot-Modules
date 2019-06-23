@@ -137,7 +137,7 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
                 attack.doKillTargetTick();
                 removeIncorrectTarget();
                 if ((main.hero.map.id == 51 || main.hero.map.id == 52 || main.hero.map.id == 53) &&
-                        ggConfig.useGateModuleLogic) {
+                        ggConfig.useGateModuleLogic && !allLowLifeOrISH()) {
                     gateModuleLogic();
                 } else {
                     eventLogic();
