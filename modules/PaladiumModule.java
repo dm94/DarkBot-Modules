@@ -28,6 +28,7 @@ import static java.lang.Math.random;
 
 public class PaladiumModule extends LootNCollectorModule implements CustomModule<PaladiumModule.PaladiumConfig> {
 
+    /*DONT USE*/
     private String version = "Alpha v0.0.13";
 
     private HeroManager hero;
