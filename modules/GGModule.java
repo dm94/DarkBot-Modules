@@ -26,7 +26,7 @@ import static java.lang.Math.cos;
 import static java.lang.Math.sin;
 
 public class GGModule extends CollectorModule implements CustomModule<GGModule.GGConfig> {
-    private String version = "v1 Beta 29";
+    private String version = "v1 Beta 30";
 
     private Main main;
     private Config config;
@@ -50,8 +50,8 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
         public Config.ShipConfig Honor = new Config.ShipConfig();
 
         @Option("GG Gate - Chosse GG Gamma to make ABG")
-        @Editor(value = JListField.class)
-        @Options(value = GGSuplier.class)
+        @Editor(JListField.class)
+        @Options(GGList.class)
         public int idGate = 51;
 
         @Option("Take materials")
@@ -88,13 +88,6 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
     @Override
     public Class configuration() {
         return GGConfig.class;
-    }
-
-    public static class GGSuplier implements Supplier<OptionList> {
-        @Override
-        public OptionList<Integer> get() {
-            return new GGList();
-        }
     }
 
     public static class GGList extends OptionList<Integer> {
