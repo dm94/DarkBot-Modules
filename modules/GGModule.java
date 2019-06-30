@@ -41,6 +41,7 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
     private int lasNpcHealth = 0;
     private int lasPlayerHealth = 0;
     private NpcAttacker attack;
+    private Location center;
 
     private boolean direction;
 
@@ -83,6 +84,7 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
         this.drive = main.hero.drive;
         this.npcs = main.mapManager.entities.npcs;
         this.ggConfig = config;
+        this.center = new Location(4100, 4100);
     }
 
     @Override
@@ -153,7 +155,7 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
                 }
             } else if (!drive.isMoving()) {
                 hero.setMode(ggConfig.Honor);
-                drive.moveRandom();
+                drive.move(center);
             }
         } else if ( main.hero.map.id == 1 || main.hero.map.id == 5 || main.hero.map.id == 9) {
             if (ggConfig.idGate == 73 || ggConfig.idGate == 72){ ggConfig.idGate = 71; }
@@ -293,7 +295,6 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
     private void gateModuleLogic() {
         if (attack.target == null || attack.target.locationInfo == null) return;
 
-        Location center = new Location(4100, 4100);
         Location now = hero.locationInfo.now;
         double safeDistance = attack.target.npcInfo.radius;
         Location location = attack.target.locationInfo.now;
