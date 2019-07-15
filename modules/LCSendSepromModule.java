@@ -1,18 +1,11 @@
 package com.github.manolo8.darkbot.modules;
 
 import com.github.manolo8.darkbot.Main;
-import com.github.manolo8.darkbot.core.entities.BasePoint;
 import com.github.manolo8.darkbot.core.itf.CustomModule;
-import com.github.manolo8.darkbot.core.manager.StatsManager;
-import com.github.manolo8.darkbot.core.objects.Gui;
-import com.github.manolo8.darkbot.core.objects.Map;
-import com.github.manolo8.darkbot.core.utils.Location;
 
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.util.LinkedHashMap;
-import java.util.List;
 
 public class LCSendSepromModule extends LootNCollectorModule implements CustomModule {
 
@@ -38,12 +31,11 @@ public class LCSendSepromModule extends LootNCollectorModule implements CustomMo
         super.tick();
     }
 
-    public void sendSeprom(){
+    private void sendSeprom(){
         int sepromToSend = main.statsManager.depositTotal - (main.statsManager.deposit+50);
 
         if (sepromToSend > 500 && this.lastSent <= System.currentTimeMillis() - this.deliveryTime) {
             try {
-                URL url = new URL("https://es2.darkorbit.com/indexInternal.es");
                 LinkedHashMap<String,Object> params = new LinkedHashMap();
                 params.put("action", "internalSkylab");
                 params.put("subaction", "startTransport");
