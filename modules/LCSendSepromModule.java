@@ -67,12 +67,13 @@ public class LCSendSepromModule extends LootNCollectorModule implements CustomMo
                     conn.setDoOutput(true);
                     conn.getOutputStream().write(postDataBytes);
                     conn.getInputStream();
+                    
+                    deliveryTime = (sepromToSend/500) * 3600000 + 120000;
+                    lastSent = System.currentTimeMillis();
                 }
             } catch (Exception e){
                 e.printStackTrace();
             }
-            deliveryTime = (sepromToSend/500) * 3600000 + 120000;
-            lastSent = System.currentTimeMillis();
         }
     }
 
