@@ -64,11 +64,13 @@ public class LCwithExtras extends LootNCollectorModule implements CustomModule<L
         if (lcConfig.discordMessage && this.waitingTime <= System.currentTimeMillis() - 600000){
             waitingTime = System.currentTimeMillis();
             sendDiscordMessage("```Total Uridium: " + formatter.format(statsManager.uridium) + " | Total Credits: " + formatter.format(statsManager.credits)
-                    + "``` ```" +
-                    " cre/h " + formatter.format(statsManager.earnedCredits()) + "\\n" +
-                    " uri/h " + formatter.format(statsManager.earnedUridium()) + "\\n" +
-                    " exp/h " + formatter.format(statsManager.earnedExperience()) + "\\n" +
-                    " hon/h " + formatter.format(statsManager.earnedHonor()) + "```");
+                    + "\\nSID Status: " + main.backpage.sidStatus()
+                    + "\\n" +
+                    "cre/h " + formatter.format(statsManager.earnedCredits()) + "\\n" +
+                    "uri/h " + formatter.format(statsManager.earnedUridium()) + "\\n" +
+                    "exp/h " + formatter.format(statsManager.earnedExperience()) + "\\n" +
+                    "hon/h " + formatter.format(statsManager.earnedHonor()) + "\\n" +
+                    "death " + main.guiManager.deaths + "```");
         }
         super.tick();
     }
