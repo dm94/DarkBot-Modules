@@ -1,21 +1,30 @@
 package com.github.manolo8.darkbot.modules;
 
 import com.github.manolo8.darkbot.Main;
+import com.github.manolo8.darkbot.config.types.Option;
 import com.github.manolo8.darkbot.core.itf.CustomModule;
+import com.github.manolo8.darkbot.core.manager.StatsManager;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.URLEncoder;
+import java.text.DecimalFormat;
 import java.util.LinkedHashMap;
 
-public class LCwithExtras extends LootNCollectorModule implements CustomModule {
+public class LCwithExtras extends LootNCollectorModule implements CustomModule<LCwithExtras.LCConfig> {
 
     private Main main;
+    private StatsManager statsManager;
     private long lastSent = 0;
     private long deliveryTime = 0;
-    private String version = "v0.2";
+    private String version = "v0.3";
+    private LCConfig lcConfig;
+    private long waitingTime = 0;
+    private final DecimalFormat formatter = new DecimalFormat("###,###,###");
 
     @Override
     public String name() { return "LC with extras"; }
@@ -24,14 +33,43 @@ public class LCwithExtras extends LootNCollectorModule implements CustomModule {
     public String author() { return "@Dm94Dani"; }
 
     @Override
-    public void install(Main main, Object config) {
+    public void install(Main main, LCConfig config) {
         super.install(main);
         this.main = main;
+        this.lcConfig = config;
+        this.statsManager = main.statsManager;
+    }
+
+    public static class LCConfig {
+        @Option("Send seprom")
+        public boolean sendSeprom = true;
+
+        @Option("Send discord menssages")
+        public boolean discordMessage = false;
+
+        @Option("Discord WebHook")
+        public String discordWebHook = null;
+    }
+
+    @Override
+    public Class configuration() {
+        return LCwithExtras.LCConfig.class;
     }
 
     @Override
     public void tick() {
-        sendSeprom();
+        if (lcConfig.sendSeprom){
+            sendSeprom();
+        }
+        if (lcConfig.discordMessage && this.waitingTime <= System.currentTimeMillis() - 600000){
+            waitingTime = System.currentTimeMillis();
+            sendDiscordMessage("```Total Uridium: " + formatter.format(statsManager.uridium) + " | Total Credits: " + formatter.format(statsManager.credits)
+                    + "``` ```" +
+                    " cre/h " + formatter.format(statsManager.earnedCredits()) + "\\n" +
+                    " uri/h " + formatter.format(statsManager.earnedUridium()) + "\\n" +
+                    " exp/h " + formatter.format(statsManager.earnedExperience()) + "\\n" +
+                    " hon/h " + formatter.format(statsManager.earnedHonor()) + "```");
+        }
         super.tick();
     }
 
@@ -45,41 +83,46 @@ public class LCwithExtras extends LootNCollectorModule implements CustomModule {
         if (sepromToSend > 500 && this.lastSent <= System.currentTimeMillis() - this.deliveryTime) {
             try {
                 if (waitingTransport(main.backpage.getConnection("indexInternal.es?action=internalSkylab").getInputStream())){
+                    lastSent = System.currentTimeMillis();
                     return;
-                }
-                HttpURLConnection conn = main.backpage.getConnection("indexInternal.es?action=internalSkylab");
-                LinkedHashMap<String,Object> params = new LinkedHashMap();
-                params.put("action", "internalSkylab");
-                params.put("subaction", "startTransport");
-                params.put("mode", "normal");
-                params.put("construction", "TRANSPORT_MODULE");
-                params.put("count_prometium", "0");
-                params.put("count_endurium", "0");
-                params.put("count_terbium", "0");
-                params.put("count_prometid", "0");
-                params.put("count_duranium", "0");
-                params.put("count_xenomit", "0");
-                params.put("count_promerium", "0");
-                params.put("count_seprom", String.valueOf(sepromToSend));
-                StringBuilder postData = new StringBuilder();
-                for (java.util.Map.Entry<String,Object> param : params.entrySet()) {
-                    if (postData.length() != 0) postData.append('&');
-                    postData.append(URLEncoder.encode(param.getKey(), "UTF-8"));
-                    postData.append('=');
-                    postData.append(URLEncoder.encode(String.valueOf(param.getValue()), "UTF-8"));
-                }
-                byte[] postDataBytes = postData.toString().getBytes("UTF-8");
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                conn.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
-                conn.setDoOutput(true);
-                conn.getOutputStream().write(postDataBytes);
-                conn.getInputStream();
+                } else {
+                    HttpURLConnection conn = main.backpage.getConnection("indexInternal.es?action=internalSkylab");
+                    LinkedHashMap<String,Object> params = new LinkedHashMap();
+                    params.put("action", "internalSkylab");
+                    params.put("subaction", "startTransport");
+                    params.put("mode", "normal");
+                    params.put("construction", "TRANSPORT_MODULE");
+                    params.put("count_prometium", "0");
+                    params.put("count_endurium", "0");
+                    params.put("count_terbium", "0");
+                    params.put("count_prometid", "0");
+                    params.put("count_duranium", "0");
+                    params.put("count_xenomit", "0");
+                    params.put("count_promerium", "0");
+                    params.put("count_seprom", String.valueOf(sepromToSend));
+                    StringBuilder postData = new StringBuilder();
+                    for (java.util.Map.Entry<String,Object> param : params.entrySet()) {
+                        if (postData.length() != 0) postData.append('&');
+                        postData.append(URLEncoder.encode(param.getKey(), "UTF-8"));
+                        postData.append('=');
+                        postData.append(URLEncoder.encode(String.valueOf(param.getValue()), "UTF-8"));
+                    }
+                    byte[] postDataBytes = postData.toString().getBytes("UTF-8");
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                    conn.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
+                    conn.setDoOutput(true);
+                    conn.getOutputStream().write(postDataBytes);
+                    conn.getInputStream();
+                    conn.disconnect();
 
-                System.out.println("Seprom sent");
-                deliveryTime = (sepromToSend/500) * 3600000 + 120000;
-                lastSent = System.currentTimeMillis();
-                conn.disconnect();
+                    deliveryTime = (sepromToSend/500) * 3600000 + 120000;
+                    lastSent = System.currentTimeMillis();
+                    System.out.println("Seprom sent");
+                    if (lcConfig.discordMessage) {
+                        sendDiscordMessage("Seprom sent");
+                    }
+                }
             } catch (Exception e){
                 e.printStackTrace();
             }
@@ -103,6 +146,30 @@ public class LCwithExtras extends LootNCollectorModule implements CustomModule {
         } catch (Exception e){}
 
         return false;
+    }
+
+    private void sendDiscordMessage(String m) {
+        if (lcConfig.discordWebHook == null || lcConfig.discordWebHook.isEmpty()) { return; }
+
+        try {
+            HttpURLConnection conn = (HttpURLConnection)new URL(lcConfig.discordWebHook).openConnection();
+            conn.setConnectTimeout(5000);
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.4; en-US; rv:1.9.2.2) Gecko/20100316 Firefox/3.6.2");
+            conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+            conn.setDoOutput(true);
+            conn.setDoInput(true);
+            conn.setRequestMethod("POST");
+            String jsonInputString = "{\"content\": \""+ m +"\"}";
+            OutputStream os = conn.getOutputStream();
+            os.write(jsonInputString.getBytes("UTF-8"));
+            os.close();
+            conn.getInputStream();
+            conn.disconnect();
+        }catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+
     }
 
 }
