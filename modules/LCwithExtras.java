@@ -1,6 +1,7 @@
 package com.github.manolo8.darkbot.modules;
 
 import com.github.manolo8.darkbot.Main;
+import com.github.manolo8.darkbot.config.types.Num;
 import com.github.manolo8.darkbot.config.types.Option;
 import com.github.manolo8.darkbot.core.itf.CustomModule;
 import com.github.manolo8.darkbot.core.manager.StatsManager;
@@ -21,9 +22,10 @@ public class LCwithExtras extends LootNCollectorModule implements CustomModule<L
     private StatsManager statsManager;
     private long lastSent = 0;
     private long deliveryTime = 0;
-    private String version = "v0.3";
+    private String version = "v0.4";
     private LCConfig lcConfig;
     private long waitingTime = 0;
+    private double lastUridium = 0;
     private final DecimalFormat formatter = new DecimalFormat("###,###,###");
 
     @Override
@@ -47,7 +49,11 @@ public class LCwithExtras extends LootNCollectorModule implements CustomModule<L
         @Option("Send discord menssages")
         public boolean discordMessage = false;
 
-        @Option("Discord WebHook")
+        @Option(value = "Message Interval", description = "How often a message is sent in minutes")
+        @Num(min = 10, max = 500, step = 5)
+        public int intervalMessage = 10;
+
+        @Option(value = "Discord WebHook", description = "Link you get when you create a webhook in discord")
         public String discordWebHook = null;
     }
 
@@ -61,7 +67,7 @@ public class LCwithExtras extends LootNCollectorModule implements CustomModule<L
         if (lcConfig.sendSeprom){
             sendSeprom();
         }
-        if (lcConfig.discordMessage && this.waitingTime <= System.currentTimeMillis() - 600000){
+        if (lcConfig.discordMessage && this.waitingTime <= System.currentTimeMillis() - (60000*lcConfig.intervalMessage)){
             waitingTime = System.currentTimeMillis();
             sendDiscordMessage("```Total Uridium: " + formatter.format(statsManager.uridium) + " | Total Credits: " + formatter.format(statsManager.credits)
                     + "\\nSID Status: " + main.backpage.sidStatus()
@@ -71,6 +77,10 @@ public class LCwithExtras extends LootNCollectorModule implements CustomModule<L
                     "exp/h " + formatter.format(statsManager.earnedExperience()) + "\\n" +
                     "hon/h " + formatter.format(statsManager.earnedHonor()) + "\\n" +
                     "death " + main.guiManager.deaths + "```");
+            if (lastUridium == statsManager.uridium) {
+                sendDiscordMessage("@here Bot stopped");
+            }
+            lastUridium = statsManager.uridium;
         }
         super.tick();
     }
