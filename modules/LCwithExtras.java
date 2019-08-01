@@ -1,10 +1,15 @@
 package com.github.manolo8.darkbot.modules;
 
 import com.github.manolo8.darkbot.Main;
+import com.github.manolo8.darkbot.config.types.Editor;
 import com.github.manolo8.darkbot.config.types.Num;
 import com.github.manolo8.darkbot.config.types.Option;
 import com.github.manolo8.darkbot.core.itf.CustomModule;
 import com.github.manolo8.darkbot.core.manager.StatsManager;
+import com.github.manolo8.darkbot.core.utils.Lazy;
+import com.github.manolo8.darkbot.gui.tree.OptionEditor;
+import com.github.manolo8.darkbot.gui.tree.components.InfoTable;
+import com.github.manolo8.darkbot.gui.utils.GenericTableModel;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -14,7 +19,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.text.DecimalFormat;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Random;
 
 public class LCwithExtras extends LootNCollectorModule implements CustomModule<LCwithExtras.LCConfig> {
 
@@ -22,11 +30,14 @@ public class LCwithExtras extends LootNCollectorModule implements CustomModule<L
     private StatsManager statsManager;
     private long lastSent = 0;
     private long deliveryTime = 0;
-    private String version = "v0.4";
+    private String version = "v0.5";
     private LCConfig lcConfig;
+    private int oneMinute = 60000;
     private long waitingTime = 0;
     private double lastUridium = 0;
+    private long waitingTimeNextMap = 0;
     private final DecimalFormat formatter = new DecimalFormat("###,###,###");
+    private Random rand = new Random();
 
     @Override
     public String name() { return "LC with extras"; }
@@ -40,6 +51,16 @@ public class LCwithExtras extends LootNCollectorModule implements CustomModule<L
         this.main = main;
         this.lcConfig = config;
         this.statsManager = main.statsManager;
+        for(String map: main.starManager.getAccessibleMaps()){
+            MapData info = this.lcConfig.Maps_Changes.get(map);
+            if (info == null) {
+                info = new MapData();
+                if (!map.equals("ERROR") && !map.isEmpty()) {
+                    lcConfig.Maps_Changes.put(map, info);
+                    lcConfig.ADDED_MAPS.send(map);
+                }
+            }
+        }
     }
 
     public static class LCConfig {
@@ -55,6 +76,15 @@ public class LCwithExtras extends LootNCollectorModule implements CustomModule<L
 
         @Option(value = "Discord WebHook", description = "Link you get when you create a webhook in discord")
         public String discordWebHook = null;
+
+        @Option("Change Map")
+        public boolean changeMap = false;
+
+        @Option("Maps")
+        @Editor(value = JMapChangeTable.class)
+        public Map<String, MapData> Maps_Changes = new HashMap<>();
+        public transient Lazy<String> ADDED_MAPS = new Lazy<>();
+
     }
 
     @Override
@@ -64,10 +94,13 @@ public class LCwithExtras extends LootNCollectorModule implements CustomModule<L
 
     @Override
     public void tick() {
-        if (lcConfig.sendSeprom){
-            sendSeprom();
+        if (lcConfig.sendSeprom) sendSeprom();
+
+        if (lcConfig.changeMap && this.waitingTimeNextMap <= System.currentTimeMillis()) {
+            goNextMap();
         }
-        if (lcConfig.discordMessage && this.waitingTime <= System.currentTimeMillis() - (60000*lcConfig.intervalMessage)){
+
+        if (lcConfig.discordMessage && this.waitingTime <= System.currentTimeMillis() - (oneMinute*lcConfig.intervalMessage)){
             waitingTime = System.currentTimeMillis();
             sendDiscordMessage("```Total Uridium: " + formatter.format(statsManager.uridium) + " | Total Credits: " + formatter.format(statsManager.credits)
                     + "\\nSID Status: " + main.backpage.sidStatus()
@@ -88,6 +121,26 @@ public class LCwithExtras extends LootNCollectorModule implements CustomModule<L
     @Override
     public String status() {
         return id() + " " + version + " | " + super.status();
+    }
+
+    private void goNextMap() {
+        HashMap<String,MapData> avaibleMaps = new HashMap<>();
+
+        for (Map.Entry<String, MapData> oneMap : lcConfig.Maps_Changes.entrySet()) {
+            if (oneMap.getValue().time != 0 && oneMap.getKey() != main.hero.map.name) {
+                avaibleMaps.put(oneMap.getKey(),oneMap.getValue());
+            }
+        }
+
+        int mapChosse = rand.nextInt(avaibleMaps.size());
+        int i = 0;
+        for (Map.Entry<String, MapData> chosseMap : avaibleMaps.entrySet()) {
+            if ( i==mapChosse) {
+                waitingTimeNextMap = System.currentTimeMillis()+((chosseMap.getValue().time+rand.nextInt(30))*oneMinute);
+                main.config.GENERAL.WORKING_MAP = main.starManager.byName(chosseMap.getKey()).id;
+            }
+            i++;
+        }
     }
 
     private void sendSeprom(){
@@ -155,7 +208,9 @@ public class LCwithExtras extends LootNCollectorModule implements CustomModule<L
             }
             in.close();
             input.close();
-        } catch (Exception e){}
+        } catch (Exception e){
+            e.printStackTrace();
+        }
 
         return false;
     }
@@ -181,7 +236,19 @@ public class LCwithExtras extends LootNCollectorModule implements CustomModule<L
             ex.printStackTrace();
         }
 
-
     }
 
+    public static class JMapChangeTable extends InfoTable<GenericTableModel,MapData> implements OptionEditor {
+        public JMapChangeTable(LCwithExtras.LCConfig lcConfig){
+            super(MapData.class, lcConfig.Maps_Changes, lcConfig.ADDED_MAPS, MapData::new);
+        }
+    }
+
+    @Option("Map")
+    public static class MapData {
+
+        @Option(value = "Time", description = "In minutes")
+        @Num(min = 5, max = 300, step = 5)
+        public int time;
+    }
 }
