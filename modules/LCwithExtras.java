@@ -138,6 +138,8 @@ public class LCwithExtras extends LootNCollectorModule implements CustomModule<L
             if ( i==mapChosse) {
                 waitingTimeNextMap = System.currentTimeMillis()+((chosseMap.getValue().time+rand.nextInt(30))*oneMinute);
                 main.config.GENERAL.WORKING_MAP = main.starManager.byName(chosseMap.getKey()).id;
+                if (lcConfig.discordMessage) { sendDiscordMessage("Map changed to "+chosseMap.getKey()); }
+                return;
             }
             i++;
         }
