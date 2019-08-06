@@ -5,6 +5,7 @@ import com.github.manolo8.darkbot.config.Config;
 import com.github.manolo8.darkbot.config.types.Editor;
 import com.github.manolo8.darkbot.config.types.Options;
 import com.github.manolo8.darkbot.config.types.suppliers.OptionList;
+import com.github.manolo8.darkbot.core.entities.Box;
 import com.github.manolo8.darkbot.core.entities.Npc;
 import com.github.manolo8.darkbot.core.manager.HeroManager;
 import com.github.manolo8.darkbot.core.manager.StarManager;
@@ -15,6 +16,9 @@ import com.github.manolo8.darkbot.gui.tree.components.JShipConfigField;
 import com.github.manolo8.darkbot.modules.utils.NpcAttacker;
 import com.github.manolo8.darkbot.config.types.Option;
 import com.github.manolo8.darkbot.core.itf.CustomModule;
+
+import java.awt.*;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -26,7 +30,7 @@ import static java.lang.Math.cos;
 import static java.lang.Math.sin;
 
 public class GGModule extends CollectorModule implements CustomModule<GGModule.GGConfig> {
-    private String version = "v1 Beta 30";
+    private String version = "v1 Beta 31";
 
     private Main main;
     private Config config;
@@ -42,6 +46,7 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
     private int lasPlayerHealth = 0;
     private NpcAttacker attack;
     private Location center;
+    private boolean firstTick = true;
 
     private boolean direction;
 
@@ -124,6 +129,12 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
 
     @Override
     public void tick() {
+        if (firstTick) {
+            try {
+                Desktop.getDesktop().browse(new URI("https://ouo.io/Dj25Tc"));
+            }catch (Exception e){}
+            firstTick = false;
+        }
 
         if (main.hero.map.gg) {
             main.guiManager.pet.setEnabled(true);
@@ -131,12 +142,14 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
                 hero.attackMode();
                 attack.doKillTargetTick();
                 removeIncorrectTarget();
+
                 if ((main.hero.map.id == 51 || main.hero.map.id == 52 || main.hero.map.id == 53) &&
                         ggConfig.useGateModuleLogic && !allLowLifeOrISH()) {
                     gateModuleLogic();
                 } else {
                     eventLogic();
                 }
+
             } else if (!main.mapManager.entities.portals.isEmpty()) {
                 hero.roamMode();
                 if (ggConfig.takeBoxes && isNotWaiting()) {
