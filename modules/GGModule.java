@@ -30,7 +30,7 @@ import static java.lang.Math.cos;
 import static java.lang.Math.sin;
 
 public class GGModule extends CollectorModule implements CustomModule<GGModule.GGConfig> {
-    private String version = "v1 Beta 31";
+    private String version = "v1 Beta 32";
 
     private Main main;
     private Config config;
@@ -243,16 +243,25 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
         if (hero.health.hpPercent() <= config.GENERAL.SAFETY.REPAIR_HP){
             rangeNPCFix = 1000;
             repairing = true;
+
+            if (allLowLifeOrISH()) {
+                drive.move(center);
+                return;
+            }
         } else if  (hero.health.hpPercent() >= config.GENERAL.SAFETY.REPAIR_TO_HP){
             repairing = false;
             rangeNPCFix = 0;
         }
 
-        if (ggConfig.useDynamicRange) {
-            dynamicNPCRange(distance);
+        if (allLowLifeOrISH() && lasPlayerHealth >= hero.health.hp && lasNpcHealth <= attack.target.health.hp) {
+           return;
         }
 
-        radius += rangeNPCFix;
+        dynamicNPCRange(distance);
+
+        if (ggConfig.useDynamicRange) {
+            radius += rangeNPCFix;
+        }
 
         if (distance > radius) {
             radiusFix -= (distance - radius) / 2;
