@@ -30,7 +30,7 @@ import static java.lang.Math.cos;
 import static java.lang.Math.sin;
 
 public class GGModule extends CollectorModule implements CustomModule<GGModule.GGConfig> {
-    private String version = "v1 Beta 32";
+    private String version = "v1 Beta 33";
 
     private Main main;
     private Config config;
@@ -150,8 +150,8 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
                     eventLogic();
                 }
 
-            } else if (!main.mapManager.entities.portals.isEmpty()) {
-                hero.roamMode();
+            } else {
+                hero.setMode(ggConfig.Honor);
                 if (ggConfig.takeBoxes && isNotWaiting()) {
                     findBox();
                     tryCollectNearestBox();
@@ -159,16 +159,15 @@ public class GGModule extends CollectorModule implements CustomModule<GGModule.G
                 if (!drive.isMoving() || drive.isOutOfMap()){
                     if (hero.health.hpPercent() >= config.GENERAL.SAFETY.REPAIR_TO_HP) {
                         repairing = false;
-                        this.main.setModule(new MapModule()).setTarget(main.starManager.byId(main.mapManager.entities.portals.get(0).id));
+                        if (!main.mapManager.entities.portals.isEmpty()) {
+                            this.main.setModule(new MapModule()).setTarget(main.starManager.byId(main.mapManager.entities.portals.get(0).id));
+                        }
                         return;
                     } else {
-                        drive.moveRandom();
                         repairing = true;
                     }
+                    drive.move(center);
                 }
-            } else if (!drive.isMoving()) {
-                hero.setMode(ggConfig.Honor);
-                drive.move(center);
             }
         } else if ( main.hero.map.id == 1 || main.hero.map.id == 5 || main.hero.map.id == 9) {
             if (ggConfig.idGate == 73 || ggConfig.idGate == 72){ ggConfig.idGate = 71; }
