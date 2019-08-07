@@ -30,7 +30,7 @@ public class LCwithExtras extends LootNCollectorModule implements CustomModule<L
     private StatsManager statsManager;
     private long lastSent = 0;
     private long deliveryTime = 0;
-    private String version = "v0.5";
+    private String version = "v0.6";
     private LCConfig lcConfig;
     private int oneMinute = 60000;
     private long waitingTime = 0;
@@ -80,8 +80,8 @@ public class LCwithExtras extends LootNCollectorModule implements CustomModule<L
         @Option("Change Map")
         public boolean changeMap = false;
 
-        @Option("Maps")
-        @Editor(value = JMapChangeTable.class)
+        @Option()
+        @Editor(value = JMapChangeTable.class, shared = true)
         public Map<String, MapData> Maps_Changes = new HashMap<>();
         public transient Lazy<String> ADDED_MAPS = new Lazy<>();
 
