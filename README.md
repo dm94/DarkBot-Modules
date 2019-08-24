@@ -18,6 +18,7 @@ GGs tested: Alpha, Beta, Gamma, Lambda, Kappa, Zeta
 
 
 Tasks and Behaviours
+
 Discord: Send Farming statistics to discord
 
 Skylab: Sends seprom/promerium to the ship automatically
