@@ -17,9 +17,8 @@ GGs tested: Alpha, Beta, Gamma, Lambda, Kappa, Zeta
 ![17 Lambdas - 14 hours - 0 deaths](http://oi64.tinypic.com/keccnm.jpg)
 
 
-LC with Extras
-
-Descripcion: It's the loot and collect module with extras
-- Sends seprom to the ship automatically
-- Farming statistics in discord
-- Change map every x time
+Tasks and Behaviours
+Discord: Send Farming statistics to discord
+Skylab: Sends seprom/promerium to the ship automatically
+MapTimetable: Change map every x time/deaths
+Others: Reload if stuck jumping, max deaths if SID is KO
