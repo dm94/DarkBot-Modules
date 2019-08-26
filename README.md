@@ -4,7 +4,6 @@
 
 [My DarkOrbit Discord: https://discord.gg/7sndXDR](https://discord.gg/7sndXDR)
 
-
 GG Module
 Descripcion: Makes GGs  and changes from formation to honor when he finishes them
 Select the GG Gamma to make A,B,G
